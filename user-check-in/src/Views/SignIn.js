@@ -1,5 +1,10 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import {validEmail} from "../Services/validations"
+import {API_URL, TOKEN, CURRENT_USER} from "./constants"
+import axios from "axios"
+import Loader from "../Components/Loader";
+import Response from "../Components/Alert";
+
 
 function SignIn() {
   const [email, setEmail] = useState("");
@@ -9,6 +14,9 @@ function SignIn() {
   const [showError, setshowError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const [errorPasswordMessage, setErrorPasswordMessage] = useState("");
+  const [responseError, setResponseError] = useState(false);
+  const [responseErrorMessage, setResponseErrorMessage] = useState("");
+  const [loading, setloading] = useState(false);
 
   // toggle between viewing password or not
   const handleClick = () => setShow(!show)
@@ -64,15 +72,34 @@ function SignIn() {
         setPasswordError(true)
         setErrorPasswordMessage('Password field can not be empty')
       }
-  
-      // console.log("#############", data)
-    };
+  else {
+    setloading(true)
+    axios.post(API_URL +'/signIn',data).then((res) => {
+      setloading(false)
+      if (res.data.message === 'failed') {
+
+        setResponseError(true)
+        setResponseErrorMessage(res.data.error)
+      }else{
+        localStorage.setItem('CURRENT_USER',JSON.stringify(res.data.user))
+        localStorage.setItem('TOKEN', res.data.token)
+        
+      }
+      
+    }).catch((err) => {
+      console.log(err)
+    })
+   }
+  }
+      
 
 
   return (
+    loading === true ? <Loader/> :
     <div className="justify-center mx-auto my-auto md:mt-10  shadow-none h-fit max-w-3xl  mb-10 ">
       <div className="text-center mt-16">
         <h1 className="text-2xl font-semibold" >Login to your account</h1>
+        <p id="email-error" className="text-red mt-5" > {!responseError ? `` : `${responseErrorMessage}`}</p>
       </div>
       <form onSubmit={logInUser}>
       <div className="my-8 relative mx-auto rounded-lg max-w-xs md:max-w-sm border-2  text-gray-dark bg-black-500  h-12 md:h-12">
